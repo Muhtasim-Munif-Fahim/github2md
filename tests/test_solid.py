@@ -12,8 +12,6 @@ import inspect
 from pathlib import Path
 from typing import Any, get_type_hints
 
-import pytest
-
 from github2md.converter import GitHubToMarkdownConverter, create_converter
 from github2md.extractor import GitHubExtractor
 from github2md.formatters.base import BaseFormatter
@@ -62,9 +60,9 @@ class TestSingleResponsibility:
         assert "extract" in public
         assert len(public) == 1
 
-    def test_writer_only_writes(self):
+    def test_writer_only_writes(self, tmp_path):
         """MarkdownFileWriter: sole job is writing content to files."""
-        writer = MarkdownFileWriter(Path("/tmp"))
+        writer = MarkdownFileWriter(tmp_path)
         sig = inspect.signature(writer.write)
         assert "content" in sig.parameters
         assert "filename" in sig.parameters
@@ -83,8 +81,14 @@ class TestSingleResponsibility:
 
     def test_parser_key_matches_formatter_key(self):
         """Parser and formatter for the same section use matching keys."""
-        parsers = {p.section_key: p for p in [ProfileParser(), ReposParser(), ContributionsParser()]}
-        formatters = {f.section_key: f for f in [ProfileFormatter(), ReposFormatter(), ContributionsFormatter()]}
+        parsers = {
+            p.section_key: p
+            for p in [ProfileParser(), ReposParser(), ContributionsParser()]
+        }
+        formatters = {
+            f.section_key: f
+            for f in [ProfileFormatter(), ReposFormatter(), ContributionsFormatter()]
+        }
         for key in parsers:
             assert key in formatters, f"Formatter missing for section '{key}'"
 
@@ -153,7 +157,7 @@ class TestOpenClosed:
         assert registered_after == registered_before + 1
 
     def test_converter_uses_registry_not_hardcoded_list(self):
-        """Converter iterates registry — adding a new parser/formatter works automatically."""
+        """Converter iterates registry — new parsers/formatters work automatically."""
         extractor = DictExtractor({"profile": [{"login": "u"}]})
         writer = InMemoryWriter()
         conv = GitHubToMarkdownConverter(extractor, writer)
@@ -178,7 +182,7 @@ class TestLiskovSubstitution:
     """Subtypes must be substitutable for their base types/protocols."""
 
     def test_parsers_implement_section_parser_protocol(self):
-        """All parsers satisfy SectionParser and can be used where SectionParser is expected."""
+        """All parsers satisfy SectionParser and are substitutable for the protocol."""
         parsers: list[SectionParser] = [
             ProfileParser(),
             ReposParser(),
@@ -306,8 +310,7 @@ class TestInterfaceSegregation:
         assert required.issubset(set(members))
 
     def test_converter_depends_on_protocols_not_concretions(self):
-        """GitHubToMarkdownConverter constructor accepts protocols, not concrete types."""
-        sig = inspect.signature(GitHubToMarkdownConverter.__init__)
+        """GitHubToMarkdownConverter accepts protocols, not concrete types."""
         hints = get_type_hints(GitHubToMarkdownConverter.__init__)
         if "extractor" in hints:
             assert hints["extractor"] == DataExtractor
@@ -335,10 +338,10 @@ class TestInterfaceSegregation:
 
 
 class TestDependencyInversion:
-    """High-level modules should not depend on low-level details; both should depend on abstractions."""
+    """High-level modules should depend on abstractions, not low-level details."""
 
     def test_converter_depends_on_abstractions(self):
-        """GitHubToMarkdownConverter depends on DataExtractor and OutputWriter protocols."""
+        """Converter depends on DataExtractor and OutputWriter protocols."""
         sig = inspect.signature(GitHubToMarkdownConverter.__init__)
         params = list(sig.parameters.keys())
         assert "extractor" in params
@@ -360,9 +363,9 @@ class TestDependencyInversion:
         files = conv.convert("testuser")
         assert isinstance(files, list)
 
-    def test_create_converter_factory_injects_dependencies(self):
+    def test_create_converter_factory_injects_dependencies(self, tmp_path):
         """Factory function wires concrete deps behind abstract interfaces."""
-        output_dir = Path("/tmp/test_github2md_dip")
+        output_dir = tmp_path / "test_github2md_dip"
         conv = create_converter(output_dir)
         assert isinstance(conv, GitHubToMarkdownConverter)
         assert isinstance(conv._extractor, GitHubExtractor)
@@ -423,7 +426,7 @@ class TestDependencyInversion:
             assert "from .base import" in src
 
     def test_formatters_reference_only_abstractions(self):
-        """Formatter implementations import from base/protocols, not concrete siblings."""
+        """Formatters import from base/protocols, not concrete siblings."""
         import github2md.formatters.profile as fp
         import github2md.formatters.repos as fr
         import github2md.formatters.contributions as fc

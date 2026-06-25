@@ -42,7 +42,6 @@ from github2md.writer import MarkdownFileWriter
 
 from .conftest import DictExtractor, InMemoryWriter
 
-
 # =============================================================================
 # S — Single Responsibility Principle
 # =============================================================================

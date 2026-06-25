@@ -415,9 +415,9 @@ class TestDependencyInversion:
 
     def test_parsers_reference_only_abstractions(self):
         """Parser implementations import from base/protocols, not concrete siblings."""
+        import github2md.parsers.contributions as pc
         import github2md.parsers.profile as pp
         import github2md.parsers.repos as pr
-        import github2md.parsers.contributions as pc
         source_pp = inspect.getsource(pp)
         source_pr = inspect.getsource(pr)
         source_pc = inspect.getsource(pc)
@@ -427,9 +427,9 @@ class TestDependencyInversion:
 
     def test_formatters_reference_only_abstractions(self):
         """Formatters import from base/protocols, not concrete siblings."""
+        import github2md.formatters.contributions as fc
         import github2md.formatters.profile as fp
         import github2md.formatters.repos as fr
-        import github2md.formatters.contributions as fc
         source_fp = inspect.getsource(fp)
         source_fr = inspect.getsource(fr)
         source_fc = inspect.getsource(fc)

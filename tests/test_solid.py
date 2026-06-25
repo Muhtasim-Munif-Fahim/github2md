@@ -133,10 +133,13 @@ class TestOpenClosed:
 
     def test_decorator_registers_parser(self):
         """@register_parser decorator auto-registers parser instances."""
+
         class _TestParser:
             section_key = "_test_parser_srp"
+
             def parse(self, raw_data):
                 return {}
+
         registered_before = len(get_parser_registry().get_all())
         register_parser(_TestParser)
         registered_after = len(get_parser_registry().get_all())
@@ -148,8 +151,10 @@ class TestOpenClosed:
         class _TestFormatter:
             section_key = "_test_fmt_ocp"
             output_filename = "_test_ocp.md"
+
             def format(self, data):
                 return ""
+
         registered_before = len(get_formatter_registry().get_all())
         register_formatter(_TestFormatter)
         registered_after = len(get_formatter_registry().get_all())
@@ -372,6 +377,7 @@ class TestDependencyInversion:
 
     def test_mock_extractor_used_in_converter(self):
         """A mock/alternative extractor seamlessly replaces GitHubExtractor."""
+
         class MockExtractor:
             def extract(self, username: str) -> dict[str, Any]:
                 return {
@@ -380,6 +386,7 @@ class TestDependencyInversion:
                     "repos": [],
                     "contributions": {},
                 }
+
         writer = InMemoryWriter()
         conv = GitHubToMarkdownConverter(MockExtractor(), writer)
         conv.convert("mockuser")
@@ -417,6 +424,7 @@ class TestDependencyInversion:
         import github2md.parsers.contributions as pc
         import github2md.parsers.profile as pp
         import github2md.parsers.repos as pr
+
         source_pp = inspect.getsource(pp)
         source_pr = inspect.getsource(pr)
         source_pc = inspect.getsource(pc)
@@ -429,6 +437,7 @@ class TestDependencyInversion:
         import github2md.formatters.contributions as fc
         import github2md.formatters.profile as fp
         import github2md.formatters.repos as fr
+
         source_fp = inspect.getsource(fp)
         source_fr = inspect.getsource(fr)
         source_fc = inspect.getsource(fc)
